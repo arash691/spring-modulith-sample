@@ -11,6 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class InventoryService {
     private final ProductRepository productRepository;
 
+    @Transactional(readOnly = true)
+    public Product getProduct(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+    }
+
     @Transactional
     public Product updateStock(Long productId, Integer quantity) {
         Product product = productRepository.findById(productId)
