@@ -3,8 +3,7 @@ package com.arash.ariani.order;
 import com.arash.ariani.inventory.InventoryService;
 import com.arash.ariani.payment.PaymentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.modulith.ApplicationModuleListener;
-import org.springframework.modulith.events.ApplicationModuleEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,12 +66,13 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    @ApplicationModuleListener
-    void on(ApplicationModuleEvent event) {
-        if (event.getPayload() instanceof com.arash.ariani.inventory.InventoryEvent inventoryEvent) {
-            System.out.println("Order module received inventory event: " + inventoryEvent);
-        } else if (event.getPayload() instanceof com.arash.ariani.payment.PaymentEvent paymentEvent) {
-            System.out.println("Order module received payment event: " + paymentEvent);
-        }
+    @EventListener
+    void onInventoryEvent(com.arash.ariani.inventory.InventoryEvent inventoryEvent) {
+        System.out.println("Order module received inventory event: " + inventoryEvent);
+    }
+
+    @EventListener
+    void onPaymentEvent(com.arash.ariani.payment.PaymentEvent paymentEvent) {
+        System.out.println("Order module received payment event: " + paymentEvent);
     }
 } 

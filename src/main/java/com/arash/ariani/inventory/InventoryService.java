@@ -1,8 +1,8 @@
 package com.arash.ariani.inventory;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.modulith.ApplicationModuleListener;
-import org.springframework.modulith.events.ApplicationModuleEvent;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class InventoryService {
     private final ProductRepository productRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Product getProduct(Long productId) {
@@ -27,10 +28,10 @@ public class InventoryService {
 
         // Publish event based on stock level
         if (savedProduct.getQuantity() <= 0) {
-            ApplicationModuleEvent.of(new InventoryEvent(productId, savedProduct.getQuantity(), 
+            eventPublisher.publishEvent(new InventoryEvent(productId, savedProduct.getQuantity(), 
                 InventoryEvent.EventType.STOCK_DEPLETED));
         } else {
-            ApplicationModuleEvent.of(new InventoryEvent(productId, savedProduct.getQuantity(), 
+            eventPublisher.publishEvent(new InventoryEvent(productId, savedProduct.getQuantity(), 
                 InventoryEvent.EventType.STOCK_UPDATED));
         }
 
@@ -49,16 +50,14 @@ public class InventoryService {
         product.setQuantity(product.getQuantity() - quantity);
         Product savedProduct = productRepository.save(product);
 
-        ApplicationModuleEvent.of(new InventoryEvent(productId, quantity, 
+        eventPublisher.publishEvent(new InventoryEvent(productId, quantity, 
             InventoryEvent.EventType.STOCK_RESERVED));
 
         return savedProduct;
     }
 
-    @ApplicationModuleListener
-    void on(ApplicationModuleEvent event) {
-        if (event.getPayload() instanceof InventoryEvent inventoryEvent) {
-            System.out.println("Inventory event received: " + inventoryEvent);
-        }
+    @EventListener
+    void onInventoryEvent(InventoryEvent inventoryEvent) {
+        System.out.println("Inventory event received: " + inventoryEvent);
     }
 } 

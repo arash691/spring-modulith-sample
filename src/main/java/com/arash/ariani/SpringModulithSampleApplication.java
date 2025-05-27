@@ -2,8 +2,8 @@ package com.arash.ariani;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.modulith.ApplicationModuleListener;
-import org.springframework.modulith.events.ApplicationModuleEvent;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.event.EventListener;
 
 @SpringBootApplication
 public class SpringModulithSampleApplication {
@@ -12,8 +12,8 @@ public class SpringModulithSampleApplication {
         SpringApplication.run(SpringModulithSampleApplication.class, args);
     }
 
-    @ApplicationModuleListener
-    void on(ApplicationModuleEvent event) {
-        System.out.println("Module event: " + event);
+    @EventListener
+    void onApplicationStarted(ApplicationStartedEvent event) {
+        System.out.println("Application started: " + event);
     }
 } 

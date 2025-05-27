@@ -1,8 +1,8 @@
 package com.arash.ariani.payment;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.modulith.ApplicationModuleListener;
-import org.springframework.modulith.events.ApplicationModuleEvent;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class PaymentService {
     private final PaymentRepository paymentRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Payment processPayment(Long orderId, Double amount, String paymentMethod) {
@@ -23,24 +24,18 @@ public class PaymentService {
         payment.setCreatedAt(LocalDateTime.now());
 
         Payment savedPayment = paymentRepository.save(payment);
+        eventPublisher.publishEvent(new PaymentEvent(orderId, amount, PaymentEvent.EventType.PAYMENT_INITIATED));
         
-        ApplicationModuleEvent.of(new PaymentEvent(orderId, amount, 
-            PaymentEvent.EventType.PAYMENT_INITIATED));
-
         // Simulate payment processing
         try {
             Thread.sleep(1000); // Simulate payment processing time
             savedPayment.setStatus(Payment.PaymentStatus.COMPLETED);
             savedPayment = paymentRepository.save(savedPayment);
-            
-            ApplicationModuleEvent.of(new PaymentEvent(orderId, amount, 
-                PaymentEvent.EventType.PAYMENT_COMPLETED));
+            eventPublisher.publishEvent(new PaymentEvent(orderId, amount, PaymentEvent.EventType.PAYMENT_COMPLETED));
         } catch (Exception e) {
             savedPayment.setStatus(Payment.PaymentStatus.FAILED);
             savedPayment = paymentRepository.save(savedPayment);
-            
-            ApplicationModuleEvent.of(new PaymentEvent(orderId, amount, 
-                PaymentEvent.EventType.PAYMENT_FAILED));
+            eventPublisher.publishEvent(new PaymentEvent(orderId, amount, PaymentEvent.EventType.PAYMENT_FAILED));
         }
 
         return savedPayment;
@@ -53,17 +48,13 @@ public class PaymentService {
 
         payment.setStatus(Payment.PaymentStatus.REFUNDED);
         Payment savedPayment = paymentRepository.save(payment);
-
-        ApplicationModuleEvent.of(new PaymentEvent(orderId, payment.getAmount(), 
-            PaymentEvent.EventType.PAYMENT_REFUNDED));
+        eventPublisher.publishEvent(new PaymentEvent(orderId, payment.getAmount(), PaymentEvent.EventType.PAYMENT_REFUNDED));
 
         return savedPayment;
     }
 
-    @ApplicationModuleListener
-    void on(ApplicationModuleEvent event) {
-        if (event.getPayload() instanceof PaymentEvent paymentEvent) {
-            System.out.println("Payment event received: " + paymentEvent);
-        }
+    @EventListener
+    void onPaymentEvent(PaymentEvent paymentEvent) {
+        System.out.println("Payment event received: " + paymentEvent);
     }
 } 

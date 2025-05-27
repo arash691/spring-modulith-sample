@@ -1,14 +1,14 @@
 package com.arash.ariani.payment;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-@Getter
-@RequiredArgsConstructor
+@Data
+@AllArgsConstructor
 public class PaymentEvent {
-    private final Long orderId;
-    private final Double amount;
-    private final EventType type;
+    private Long orderId;
+    private Double amount;
+    private EventType eventType;
 
     public enum EventType {
         PAYMENT_INITIATED,
